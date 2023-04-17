@@ -1,0 +1,94 @@
+
+
+service: img2pdf
+# app and org for use with dashboard.serverless.com
+app: img2pdf
+org: purushottam
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  profile: puru
+  tracing:
+    apiGateway: true
+    lambda: true
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - "logs:CreateLogGroup"
+        - "logs:CreateLogStream"
+        - "logs:PutLogEvents"
+        - "ec2:CreateNetworkInterface"
+        - "ec2:DescribeNetworkInterfaces"
+        - "ec2:DeleteNetworkInterface"
+        - lambda:InvokeFunction
+      Resource:
+        - arn:aws:lambda:ap-south-1:*:* # Had to add this too
+# you can overwrite defaults here
+  stage: dev
+  region: ap-south-1
+
+
+plugins:
+  - serverless-offline
+
+custom:
+  MySQL:
+    DB_NAME: image-to-pdf-database
+    USERNAME: admin
+    PASSWORD: puruimg2pdf
+    HOST: image-to-pdf-database.cytvbvbmlzrr.ap-south-1.rds.amazonaws.com
+    PORT: 3306
+
+functions:
+  createUser:
+    handler: controllers/userHandlers/createUser.handler
+    events:
+      - http:
+          path: /users/register
+          method: post
+          cors: true
+  login:
+    handler: controllers/userHandlers/login.handler
+    events:
+      - http:
+          path: /users/login
+          method: post
+          cors: true
+  upload:
+    handler: controllers/imageHandlers/upload.handler
+    events:
+      - http:
+          path: /images/upload
+          method: post
+          cors: true      
+  getImages:
+    handler: controllers/imageHandlers/getImages.handler
+    events:
+      - http:
+          path: /images/history
+          method: get
+          cors: true  
+  renameCollection:
+    handler: controllers/imageHandlers/renameCollection.handler
+    events:
+      - http:
+          path: /images/renameCollection
+          method: post
+          cors: true
+
+
+# resources:
+#   MyDB:
+#     Type: AWS::RDS::DBInstance
+#     Properties:
+#       AllocatedStorage: '5'
+#       DBInstanceClass: db.t2.small
+#       Engine: MySQL
+#       MasterUsername: admin
+#       MasterUserPassword: puruimg2pdf
+#     DeletionPolicy: Snapshot
